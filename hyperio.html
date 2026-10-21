@@ -6,77 +6,53 @@
 <title>hyper.io - Evolução</title>
 <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 <style>
-  :root { --bg1:#050a10; --accent:#4dff9e; --accent2:#7ef0c0; --gold:#ffd166; --gem:#c77dff; --danger:#ff6b6b; --card:#0e2a3d; --cardBorder:#2a6d8b; --text:#c9ffe9; --muted:#8fb8cc; }
+  :root { --accent:#4dff9e; --gold:#ffd166; --danger:#ff6b6b; --card:#0e2a3d; --text:#c9ffe9; }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { margin:0; height:100%; overflow:hidden; background:#04101a; font-family: system-ui, sans-serif; touch-action:none; user-select:none; color:var(--text); }
   #gameCanvas { display:block; width:100vw; height:100vh; }
-  #ui { position:fixed; inset:0; pointer-events:none; z-index: 10; }
-  .screen { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:flex-start; background: radial-gradient(circle at 50% 30%, #163a52, #04101a 75%); pointer-events:auto; overflow-y:auto; padding:18px 0 80px; }
   .hidden { display:none !important; }
+  .screen { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:flex-start; background: radial-gradient(circle at 50% 30%, #163a52, #04101a 75%); pointer-events:auto; overflow-y:auto; padding:18px 0 80px; }
   
-  .currency-bar { position:absolute; top:calc(16px + env(safe-area-inset-top)); left:16px; display:flex; flex-direction:column; gap:6px; z-index:5; }
-  .currency { display:flex; align-items:center; gap:8px; font-size:18px; font-weight:800; background:#0008; padding:4px 12px; border-radius:20px; border:1px solid #ffffff22; }
-  .coin-icon { width:22px; height:22px; border-radius:50%; background: radial-gradient(circle at 35% 30%, #fff6a8, #ffc400 60%, #b88600); box-shadow:0 0 10px #ffc400; }
-  .gem-icon { width:22px; height:22px; background: linear-gradient(135deg, #e0c3fc, #8ec5fc); clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%); box-shadow:0 0 10px #c77dff; }
+  .currency-bar { position:absolute; top:calc(16px + env(safe-area-inset-top)); left:16px; display:flex; gap:10px; z-index:5; font-weight:900; font-size:18px; background: #0008; padding: 5px 15px; border-radius: 20px;}
+  .coin { color:var(--gold); } .gem { color:#c77dff; }
 
-  .title { color:var(--text); font-size:42px; font-weight:900; text-align:center; line-height:1; text-shadow:0 0 25px #27b67a; margin:10px 0; letter-spacing:1px; }
-  .title small { font-size:15px; color:#8fd; font-weight:600; letter-spacing:0; }
-  .play-btn { width:140px; height:140px; border-radius:50%; border:6px solid var(--accent2); background: radial-gradient(circle at 35% 30%, #9effd4, #27b67a 60%, #0a6b45); color:#042; font-size:27px; font-weight:900; box-shadow:0 0 35px #27b67a99, inset 0 -8px 18px #0004; cursor:pointer; pointer-events:auto; margin-top:12px; display:flex; align-items:center; justify-content:center;}
-  .play-btn:active { transform:scale(0.96); }
+  .title { color:var(--text); font-size:42px; font-weight:900; text-align:center; line-height:1; text-shadow:0 0 25px #27b67a; margin:10px 0; }
+  .play-btn { width:140px; height:140px; border-radius:50%; border:6px solid #fff; background: radial-gradient(circle at 35% 30%, #9effd4, #27b67a 60%, #0a6b45); color:#042; font-size:27px; font-weight:900; cursor:pointer; margin-top:12px; display:flex; align-items:center; justify-content:center;}
 
-  /* Seletor de Modo (Setas) */
-  .mode-selector { display:flex; align-items:center; justify-content:center; gap:20px; margin-top:20px; width:100%; }
-  .arrow-btn { background:none; border:none; color:var(--danger); font-size:40px; cursor:pointer; pointer-events:auto; padding:0 10px; }
-  .mode-name { color:var(--danger); font-size:24px; font-weight:900; width:150px; text-align:center; text-transform:uppercase; text-shadow:0 0 10px #ff6b6b88; }
-
-  .float-btn { position:absolute; padding:10px 16px; border-radius:14px; font-size:13px; font-weight:900; pointer-events:auto; cursor:pointer; box-shadow:0 0 15px #0006; display:flex; align-items:center; gap:6px; border:2px solid; z-index:20; }
+  .float-btn { position:absolute; padding:10px 16px; border-radius:14px; font-size:13px; font-weight:900; cursor:pointer; border:2px solid; z-index:20; }
   #upgradesBtn { top:calc(70px + env(safe-area-inset-top)); left:16px; border-color:var(--gold); background:#1b3b52ee; color:var(--gold); }
-  #battlepassBtn { top:calc(70px + env(safe-area-inset-top)); right:16px; border-color:var(--gem); background:#2a1640ee; color:#d9b8ff; }
-  #settingsBtn { bottom:calc(16px + env(safe-area-inset-bottom)); right:16px; border-color:var(--cardBorder); background:#0e2a3dee; color:var(--text); }
+  #battlepassBtn { top:calc(70px + env(safe-area-inset-top)); right:16px; border-color:#c77dff; background:#2a1640ee; color:#d9b8ff; }
+  #settingsBtn { position:absolute; bottom:20px; right:20px; border-color:#7ef0c0; background:#0e2a3dee; color:#fff; }
 
-  /* Barra de XP no Lobby */
-  .xp-bar-container { position:absolute; bottom:0; left:0; width:100%; height:40px; background:#000a; border-top:2px solid #333; display:flex; align-items:center; justify-content:center; }
-  .xp-bar-fill { position:absolute; left:0; top:0; height:100%; background:linear-gradient(90deg, #ff6b6b, #ff8fab); width:0%; z-index:1; transition:width 0.3s; }
-  .xp-text { position:relative; z-index:2; font-weight:900; font-size:14px; color:#fff; text-shadow:0 1px 2px #000; }
+  .mode-selector { display:flex; align-items:center; justify-content:center; gap:20px; margin-top:20px; }
+  .arrow-btn { background:none; border:none; color:var(--danger); font-size:40px; cursor:pointer; }
+  .mode-name { color:var(--danger); font-size:24px; font-weight:900; width:150px; text-align:center; text-transform:uppercase; }
 
-  /* Botões Redondos de Ação no Jogo */
   #actions { position:absolute; left:20px; bottom:calc(20px + env(safe-area-inset-bottom)); display:flex; flex-direction:column; gap:15px; pointer-events:none; z-index:20; }
-  .circle-btn { width:75px; height:75px; border-radius:50%; border:3px solid #fff; background: radial-gradient(circle at 35% 30%, #333, #111); color:#fff; font-size:30px; display:flex; align-items:center; justify-content:center; pointer-events:auto; cursor:pointer; box-shadow:0 0 15px #000a; }
-  .circle-btn:active { transform:scale(0.9); }
-  #splitBtn { border-color:#ff6b6b; }
-  #potionBtn { border-color:#4dff9e; }
+  .circle-btn { width:70px; height:70px; border-radius:50%; border:3px solid #fff; background: radial-gradient(circle at 35% 30%, #333, #111); color:#fff; font-size:30px; display:flex; align-items:center; justify-content:center; pointer-events:auto; cursor:pointer; }
+  #splitBtn { border-color:#ff6b6b; } #potionBtn { border-color:#4dff9e; }
 
   #joystick { position:absolute; right:20px; bottom:calc(20px + env(safe-area-inset-bottom)); width:130px; height:130px; border-radius:50%; border:3px solid #ffffff55; background:#ffffff11; pointer-events:auto; z-index:20; touch-action:none; }
   #joyKnob { position:absolute; left:50%; top:50%; width:60px; height:60px; border-radius:50%; border:2px solid #fff; background:#ffffffcc; transform:translate(-50%,-50%); pointer-events:none; }
 
-  /* HUD do Jogo */
   #hud { position:absolute; inset:0; pointer-events:none; z-index:20; }
-  #massHud { position:absolute; top:16px; left:16px; background:#000a; padding:8px 15px; border-radius:10px; color:#fff; font-weight:900; font-size:18px; border:1px solid #fff3; }
+  #massHud { position:absolute; top:16px; left:16px; background:#000a; padding:8px 15px; border-radius:10px; color:#fff; font-weight:900; border:1px solid #fff3; }
   #leaderboard { position:absolute; top:16px; right:16px; background:#000a; padding:10px; border-radius:10px; font-size:12px; border:1px solid #fff3; min-width:150px; }
 
-  /* Chat */
-  #chatBtn { position:absolute; right:16px; bottom:calc(160px + env(safe-area-inset-bottom)); width:46px; height:46px; border-radius:50%; background:#0e2a3d; border:2px solid #7ef0c0; color:#fff; font-size:20px; pointer-events:auto; z-index:20; display:flex; align-items:center; justify-content:center; }
-  #chatBox { position:absolute; bottom:calc(220px + env(safe-area-inset-bottom)); left:50%; transform:translateX(-50%); width:90%; max-width:300px; background:#000c; border:2px solid #7ef0c0; border-radius:12px; padding:10px; display:none; flex-direction:column; gap:8px; z-index:25; pointer-events:auto; }
-  #chatBox input { width:100%; padding:10px; border-radius:8px; border:none; background:#fff; color:#000; font-size:14px; }
-  #chatBox button { padding:8px; border-radius:8px; border:none; background:#27b67a; color:#fff; font-weight:bold; }
-  #chatLog { position:absolute; bottom:calc(20px + env(safe-area-inset-bottom)); left:16px; color:#fff; font-size:12px; font-weight:bold; text-shadow:0 1px 3px #000; display:flex; flex-direction:column; gap:2px; pointer-events:none; z-index:15; width:200px; }
-
-  /* Lojas e Menus */
-  .login-card { width:100%; max-width:360px; background:var(--card); border:2px solid var(--cardBorder); border-radius:22px; padding:22px 20px; margin-top:20px; display:flex; flex-direction:column; gap:12px; z-index:30; }
-  .login-card input { width:100%; padding:14px; border-radius:12px; border:2px solid var(--cardBorder); background:#081824; color:var(--text); font-size:16px; outline:none; }
+  .login-card { width:100%; max-width:360px; background:var(--card); border:2px solid #7ef0c0; border-radius:22px; padding:22px; display:flex; flex-direction:column; gap:12px; z-index:30; }
+  .login-card input { width:100%; padding:14px; border-radius:12px; border:2px solid #2a6d8b; background:#081824; color:var(--text); font-size:16px; outline:none; }
   .login-card button { padding:14px; border-radius:999px; border:none; background:linear-gradient(135deg, #9effd4, #27b67a); color:#042; font-size:16px; font-weight:900; cursor:pointer; }
-  .back-btn { margin-top:16px; padding:12px 30px; border-radius:999px; border:2px solid var(--accent2); background:transparent; color:var(--text); font-size:15px; font-weight:800; pointer-events:auto; z-index:30; }
-  
-  .category-grid { display:grid; grid-template-columns:repeat(2, 1fr); gap:14px; padding:0 20px; width:100%; max-width:520px; }
-  .category-card { background:var(--card); border:2px solid var(--cardBorder); border-radius:18px; padding:15px; text-align:center; font-weight:bold; font-size:18px; cursor:pointer; pointer-events:auto; }
-  
-  .skin-grid { display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; padding:0 20px; width:100%; max-width:520px; }
-  .skin-card { background:var(--card); border:2px solid var(--cardBorder); border-radius:14px; padding:10px; display:flex; flex-direction:column; align-items:center; gap:8px; cursor:pointer; pointer-events:auto; }
-  .skin-img { width:60px; height:60px; border-radius:50%; object-fit:cover; border:2px solid #fff; }
-  .skin-price { color:var(--gold); font-weight:bold; font-size:12px; }
+  .back-btn { margin-top:16px; padding:12px 30px; border-radius:999px; border:2px solid #7ef0c0; background:transparent; color:var(--text); font-weight:800; pointer-events:auto; z-index:30; }
 
-  .banner { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); background:#04101acc; border:2px solid var(--gold); border-radius:16px; padding:14px 24px; color:var(--gold); font-size:18px; font-weight:900; text-align:center; pointer-events:none; z-index:30; animation: pop 2s ease forwards; }
-  @keyframes pop { 0% { opacity:0; transform:translate(-50%,-50%) scale(0.7); } 20% { opacity:1; transform:translate(-50%,-50%) scale(1.05); } 80% { opacity:1; transform:translate(-50%,-50%) scale(1); } 100% { opacity:0; transform:translate(-50%,-50%) scale(1.1); } }
+  .category-grid { display:grid; grid-template-columns:repeat(2, 1fr); gap:14px; padding:0 20px; width:100%; max-width:520px; }
+  .category-card { background:var(--card); border:2px solid #2a6d8b; border-radius:18px; padding:15px; text-align:center; font-weight:bold; font-size:18px; cursor:pointer; pointer-events:auto; }
+  .skin-grid { display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; padding:0 20px; width:100%; max-width:520px; }
+  .skin-card { background:var(--card); border:2px solid #2a6d8b; border-radius:14px; padding:10px; display:flex; flex-direction:column; align-items:center; gap:8px; cursor:pointer; pointer-events:auto; }
+  .skin-img { width:60px; height:60px; border-radius:50%; object-fit:cover; border:2px solid #fff; }
+  
+  .xp-bar-container { position:absolute; bottom:0; left:0; width:100%; height:40px; background:#000a; border-top:2px solid #333; display:flex; align-items:center; justify-content:center; }
+  .xp-bar-fill { position:absolute; left:0; top:0; height:100%; background:linear-gradient(90deg, #ff6b6b, #ff8fab); width:0%; z-index:1; transition:width 0.3s; }
+  .xp-text { position:relative; z-index:2; font-weight:900; font-size:14px; color:#fff; }
 </style>
 </head>
 <body>
@@ -108,10 +84,9 @@
   <!-- LOBBY -->
   <div id="lobby" class="screen hidden">
     <div class="currency-bar">
-      <div class="currency"><div class="coin-icon"></div><span id="coinLobby">0</span></div>
-      <div class="currency"><div class="gem-icon"></div><span id="gemLobby">0</span></div>
+      <span class="coin">🪙 <span id="coinLobby">0</span></span>
+      <span class="gem">💎 <span id="gemLobby">0</span></span>
     </div>
-    
     <button id="upgradesBtn" class="float-btn">🛒 LOJA</button>
     <button id="battlepassBtn" class="float-btn">👑 BATTLE PASS</button>
 
@@ -119,74 +94,67 @@
     
     <div class="mode-selector">
       <button class="arrow-btn" id="prevMode">◀</button>
-      <div class="mode-name" id="currentMode">SOLO MODE</div>
+      <div class="mode-name" id="currentMode">SOLO</div>
       <button class="arrow-btn" id="nextMode">▶</button>
     </div>
 
     <button id="playBtn" class="play-btn" style="margin-top:20px;">▶</button>
-
-    <div style="position:absolute; bottom:60px; width:100%; text-align:center; color:var(--gold); font-weight:bold;">
-      Recorde: <span id="recSize">0</span> Massa
-    </div>
-
+    
     <button id="settingsBtn" class="float-btn">⚙️</button>
 
-    <!-- Barra de XP -->
     <div class="xp-bar-container">
       <div class="xp-bar-fill" id="xpBarFill"></div>
       <div class="xp-text">XP <span id="xpText">0 / 100</span></div>
     </div>
   </div>
 
-  <!-- LOJA DE SKINS (CATEGORIAS) -->
+  <!-- LOJA -->
   <div id="shopScreen" class="screen hidden">
-    <div class="title" style="font-size:24px;">Loja de Skins</div>
+    <div class="title" style="font-size:24px;">Loja</div>
     <div id="categoryView" class="category-grid">
       <div class="category-card" onclick="openCategory('natal')">🎄 Natal</div>
       <div class="category-card" onclick="openCategory('comida')">🍔 Comida</div>
       <div class="category-card" onclick="openCategory('animais')">🐶 Animais</div>
       <div class="category-card" onclick="openCategory('logos')">💻 Logos</div>
     </div>
-    
     <div id="skinView" class="hidden" style="width:100%; display:flex; flex-direction:column; align-items:center;">
       <h3 id="catTitle" style="color:var(--gold); margin-bottom:10px;">Skins</h3>
       <div id="skinList" class="skin-grid"></div>
       <button class="back-btn" onclick="document.getElementById('skinView').classList.add('hidden'); document.getElementById('categoryView').classList.remove('hidden');">VOLTAR</button>
     </div>
-
-    <button class="back-btn" data-back="lobby" id="backFromShop" style="margin-top:20px;">VOLTAR AO LOBBY</button>
+    <button class="back-btn" onclick="showScreen('lobby')" style="margin-top:20px;">VOLTAR AO LOBBY</button>
   </div>
 
   <!-- BATTLE PASS -->
   <div id="battlepassScreen" class="screen hidden">
     <div class="title" style="font-size:24px;">Battle Pass</div>
     <div style="width:100%; max-width:400px; background:var(--card); padding:20px; border-radius:20px; text-align:center;">
-      <p>Nível do Passe: <b id="bpLevel" style="color:var(--gold); font-size:24px;">1</b></p>
-      <p>Ganhe XP jogando para desbloquear recompensas!</p>
-      <div style="display:flex; justify-content:center; gap:10px; margin-top:20px;">
-        <div style="background:#333; padding:10px; border-radius:10px;">Nv 1<br>🪙 100</div>
-        <div style="background:#333; padding:10px; border-radius:10px;">Nv 2<br>💎 5</div>
-        <div style="background:#333; padding:10px; border-radius:10px;">Nv 3<br>🎁 Baú</div>
-      </div>
+      <p>Nível: <b id="bpLevel" style="color:var(--gold); font-size:24px;">1</b></p>
+      <div style="background:#000a; height:20px; border-radius:10px; margin:10px 0; overflow:hidden;"><div id="xpBar" style="height:100%; width:0%; background:var(--gold);"></div></div>
+      <p>XP: <span id="xpTextBP">0 / 100</span></p>
     </div>
-    <button class="back-btn" data-back="lobby">VOLTAR</button>
+    <button class="back-btn" onclick="showScreen('lobby')">VOLTAR</button>
+  </div>
+
+  <!-- CONFIGURAÇÕES -->
+  <div id="settingsScreen" class="screen hidden">
+    <div class="title" style="font-size:24px;">Configurações</div>
+    <div class="login-card">
+      <div style="text-align:center; margin-top:10px; font-size:12px; color:#8fb8cc;">Game by: miranhaX<br>Discord: miranhaX_00</div>
+      <button id="logoutBtn" style="background:#ff6b6b; color:#fff; margin-top:20px;">SAIR DA CONTA</button>
+    </div>
+    <button class="back-btn" onclick="showScreen('lobby')">VOLTAR</button>
   </div>
 
   <!-- HUD DO JOGO -->
   <div id="hud" class="hidden">
     <div id="massHud">MASSA: <span id="massVal">0</span></div>
     <div id="leaderboard"><h3>🏆 TOP 10</h3><div id="lbList"></div></div>
-    
     <div id="actions">
       <button id="splitBtn" class="circle-btn">⚙️</button>
       <button id="potionBtn" class="circle-btn">🧪</button>
     </div>
-    
     <div id="joystick"><div id="joyKnob"></div></div>
-    
-    <div id="chatBtn">💬</div>
-    <div id="chatBox"><input id="chatInput" type="text" placeholder="Mensagem..."><button id="sendChat">Enviar</button></div>
-    <div id="chatLog"></div>
   </div>
   
   <div id="bannerSlot"></div>
@@ -196,44 +164,34 @@
 const SERVER_URL = 'https://hyper-io-server.onrender.com';
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
-const bannerSlot = document.getElementById('bannerSlot');
 let W, H, socket, myId = null, worldSize = 5000;
-let players = {}, foods = [], viruses = [], mapCoins = [];
+let players = {}, foods = [], viruses = [];
 let camera = { x: 0, y: 0, zoom: 1 };
 let joy = { active: false, x: 0, y: 0 };
-let lastTime = 0, state = 'auth', currentAccount = null;
+let lastTime = 0;
+let currentAccount = null;
 let customImage = null;
 
-// ESTADO DE JOGO (FÍSICA MULTI-CÉLULA)
-let myCells = []; // Array com as células do jogador
+let myCells = [];
 let myMass = 20;
 let canSplit = 0;
 let isPlaying = false;
-let currentModeIndex = 0;
-const MODES = ["SOLO MODE", "CRAZY MODE", "TIME ATTACK"];
+const MODES = ["SOLO", "CRAZY", "TIME"];
 
-// BANCO DE DADOS DO JOGADOR
-let save = { 
-  coins: 0, gems: 0, xp: 0, bpLevel: 1, ownedSkins: [], equippedSkin: 'none', customSkin: null, recordSize: 0 
-};
+let save = { coins: 0, gems: 0, xp: 0, bpLevel: 1, ownedSkins: [], equippedSkin: 'none', customSkin: null };
 
 const SKINS_DB = {
   natal: [
     { id: 'santa', name: 'Papai Noel', price: 500, img: 'https://cdn-icons-png.flaticon.com/512/791/791500.png' },
     { id: 'tree', name: 'Pinheiro', price: 300, img: 'https://cdn-icons-png.flaticon.com/512/861/861528.png' },
     { id: 'gift', name: 'Presente', price: 400, img: 'https://cdn-icons-png.flaticon.com/512/4213/4213268.png' },
-    { id: 'snow', name: 'Boneco de Neve', price: 450, img: 'https://cdn-icons-png.flaticon.com/512/789/789422.png' },
+    { id: 'snow', name: 'Boneco', price: 450, img: 'https://cdn-icons-png.flaticon.com/512/789/789422.png' },
     { id: 'star', name: 'Estrela', price: 200, img: 'https://cdn-icons-png.flaticon.com/512/616/616490.png' },
-    { id: 'candy', name: 'Bengala Doce', price: 250, img: 'https://cdn-icons-png.flaticon.com/512/2590/2590517.png' },
-    { id: 'deer', name: 'Rena', price: 600, img: 'https://cdn-icons-png.flaticon.com/512/3750/3750169.png' },
-    { id: 'bell', name: 'Sino', price: 350, img: 'https://cdn-icons-png.flaticon.com/512/2913/2913139.png' },
-    { id: 'sock', name: 'Meia', price: 150, img: 'https://cdn-icons-png.flaticon.com/512/1073/1073218.png' },
-    { id: 'snowflake', name: 'Floco', price: 100, img: 'https://cdn-icons-png.flaticon.com/512/642/642102.png' }
+    { id: 'candy', name: 'Bengala', price: 250, img: 'https://cdn-icons-png.flaticon.com/512/2590/2590517.png' }
   ],
   comida: [
     { id: 'burger', name: 'Hambúrguer', price: 500, img: 'https://cdn-icons-png.flaticon.com/512/3075/3075977.png' },
-    { id: 'pizza', name: 'Pizza', price: 500, img: 'https://cdn-icons-png.flaticon.com/512/1404/1404945.png' },
-    { id: 'donut', name: 'Donut', price: 300, img: 'https://cdn-icons-png.flaticon.com/512/992/992720.png' }
+    { id: 'pizza', name: 'Pizza', price: 500, img: 'https://cdn-icons-png.flaticon.com/512/1404/1404945.png' }
   ],
   animais: [
     { id: 'dog', name: 'Cachorro', price: 800, img: 'https://cdn-icons-png.flaticon.com/512/616/616408.png' },
@@ -255,24 +213,21 @@ function persist() { if (currentAccount) setSaveFor(currentAccount, save); updat
 function updateUI() {
   if(document.getElementById('coinLobby')) document.getElementById('coinLobby').textContent = save.coins;
   if(document.getElementById('gemLobby')) document.getElementById('gemLobby').textContent = save.gems;
-  if(document.getElementById('recSize')) document.getElementById('recSize').textContent = Math.round(save.recordSize);
-  let xpNeeded = save.bpLevel * 100;
-  if(document.getElementById('xpBarFill')) document.getElementById('xpBarFill').style.width = ((save.xp / xpNeeded) * 100) + '%';
-  if(document.getElementById('xpText')) document.getElementById('xpText').textContent = `${save.xp} / ${xpNeeded}`;
   if(document.getElementById('bpLevel')) document.getElementById('bpLevel').textContent = save.bpLevel;
+  if(document.getElementById('xpText')) document.getElementById('xpText').textContent = save.xp + ' / 100';
+  if(document.getElementById('xpTextBP')) document.getElementById('xpTextBP').textContent = save.xp + ' / 100';
+  if(document.getElementById('xpBarFill')) document.getElementById('xpBarFill').style.width = save.xp + '%';
+  if(document.getElementById('xpBar')) document.getElementById('xpBar').style.width = save.xp + '%';
 }
 
 function showScreen(id) { document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden')); document.getElementById(id).classList.remove('hidden'); }
-document.querySelectorAll('[data-back]').forEach(b => b.addEventListener('click', () => showScreen(b.dataset.back)));
-
 function loginAs(name) {
   currentAccount = name;
-  save = Object.assign({coins:0, gems:0, xp:0, bpLevel:1, ownedSkins:[], equippedSkin:'none', customSkin:null, recordSize:0}, saveFor(name) || {});
+  save = Object.assign({coins:0, gems:0, xp:0, bpLevel:1, ownedSkins:[], equippedSkin:'none', customSkin:null}, saveFor(name) || {});
   if(save.customSkin) { const img = new Image(); img.onload = () => customImage = img; img.src = save.customSkin; }
   document.getElementById('welcomeName').textContent = name;
-  updateUI(); showScreen('lobby'); state = 'lobby';
+  updateUI(); showScreen('lobby');
 }
-
 document.getElementById('toRegister').onclick = () => { document.getElementById('loginCard').classList.add('hidden'); document.getElementById('registerCard').classList.remove('hidden'); };
 document.getElementById('toLogin').onclick = () => { document.getElementById('registerCard').classList.add('hidden'); document.getElementById('loginCard').classList.remove('hidden'); };
 document.getElementById('loginBtn').onclick = async () => {
@@ -289,15 +244,14 @@ document.getElementById('registerBtn').onclick = async () => {
   if(accs[n.toLowerCase()]) return document.getElementById('regError').textContent = 'Nome já existe.';
   accs[n.toLowerCase()] = { name: n, hash: await hashPass(p1) }; setAccounts(accs); loginAs(n);
 };
-
-// NAVEGAÇÃO DE MENUS
-document.getElementById('settingsBtn').onclick = () => showScreen('settingsScreen');
 document.getElementById('upgradesBtn').onclick = () => showScreen('shopScreen');
 document.getElementById('battlepassBtn').onclick = () => showScreen('battlepassScreen');
-document.getElementById('backFromShop').onclick = () => { showScreen('lobby'); document.getElementById('skinView').classList.add('hidden'); document.getElementById('categoryView').classList.remove('hidden'); };
+document.getElementById('settingsBtn').onclick = () => showScreen('settingsScreen');
+document.getElementById('logoutBtn').onclick = () => { currentAccount = null; showScreen('auth'); };
 
-document.getElementById('prevMode').onclick = () => { currentModeIndex = (currentModeIndex - 1 + MODES.length) % MODES.length; document.getElementById('currentMode').textContent = MODES[currentModeIndex]; };
-document.getElementById('nextMode').onclick = () => { currentModeIndex = (currentModeIndex + 1) % MODES.length; document.getElementById('currentMode').textContent = MODES[currentModeIndex]; };
+let modeIdx = 0;
+document.getElementById('prevMode').onclick = () => { modeIdx = (modeIdx - 1 + MODES.length) % MODES.length; document.getElementById('currentMode').textContent = MODES[modeIdx]; };
+document.getElementById('nextMode').onclick = () => { modeIdx = (modeIdx + 1) % MODES.length; document.getElementById('currentMode').textContent = MODES[modeIdx]; };
 
 window.openCategory = function(cat) {
   document.getElementById('categoryView').classList.add('hidden');
@@ -309,10 +263,10 @@ window.openCategory = function(cat) {
     const div = document.createElement('div'); div.className = 'skin-card';
     div.innerHTML = `<img src="${skin.img}" class="skin-img"><div style="font-size:11px; text-align:center;">${skin.name}</div>`;
     if(owned) {
-      div.innerHTML += `<div class="skin-price" style="color:#4dff9e;">Comprado</div>`;
+      div.innerHTML += `<div style="color:#4dff9e; font-weight:bold; font-size:12px;">Equipar</div>`;
       div.onclick = () => { save.equippedSkin = skin.id; save.customSkin = skin.img; persist(); alert('Equipado!'); };
     } else {
-      div.innerHTML += `<div class="skin-price">🪙 ${skin.price}</div>`;
+      div.innerHTML += `<div style="color:var(--gold); font-weight:bold; font-size:12px;">🪙 ${skin.price}</div>`;
       div.onclick = () => {
         if(save.coins >= skin.price) { save.coins -= skin.price; save.ownedSkins.push(skin.id); persist(); openCategory(cat); alert('Comprado!'); }
         else alert('Moedas insuficientes!');
@@ -323,153 +277,121 @@ window.openCategory = function(cat) {
 }
 
 // ==========================================
-// LÓGICA DE JOGO (MULTI-CÉLULA E VÍRUS)
+// LÓGICA DO JOGO
 // ==========================================
-function getSpeed(radius) { return Math.max(3, 10 - Math.log2(radius) * 0.5); }
-
 document.getElementById('playBtn').onclick = () => {
   showScreen('hud');
   myMass = 20; myCells = [{x: 2500, y: 2500, r: 20}]; canSplit = 4; isPlaying = true;
   
-  // Gera mapa local (Simulando o servidor)
   foods = []; for(let i=0; i<500; i++) foods.push({x: Math.random()*worldSize, y: Math.random()*worldSize, r: 5, color: `hsl(${Math.random()*360}, 80%, 60%)`});
   viruses = []; for(let i=0; i<20; i++) viruses.push({x: Math.random()*worldSize, y: Math.random()*worldSize, r: 25});
-  mapCoins = []; for(let i=0; i<5; i++) mapCoins.push({x: Math.random()*worldSize, y: Math.random()*worldSize, r: 10});
   
-  // Conecta ao servidor (multiplayer)
   socket = io(SERVER_URL, { transports: ['websocket', 'polling'] });
   socket.on('init', (data) => { myId = data.myId; players = data.players; socket.emit('setName', currentAccount); });
   socket.on('playerMoved', (p) => { if(players[p.id]) { players[p.id].x = p.x; players[p.id].y = p.y; players[p.id].r = p.r; } });
   socket.on('playerDisconnected', (id) => delete players[id]);
   socket.on('newPlayer', (p) => players[p.id] = p);
-  socket.on('chatMessage', (data) => addChatMsg(`${data.name}: ${data.msg}`));
+  
+  // Ganhar XP ao jogar
+  setInterval(() => { if(isPlaying) { save.xp += 2; if(save.xp >= 100) { save.xp -= 100; save.bpLevel++; save.coins += 100; } persist(); } }, 3000);
 };
 
 function doSplit() {
   if(canSplit <= 0 || myCells.length >= 16) return;
   const newCells = [];
   myCells.forEach(cell => {
-    if(cell.r > 35) {
-      const newR = cell.r / Math.SQRT2;
-      cell.r = newR;
-      newCells.push({ x: cell.x, y: cell.y, r: newR, vx: 10, vy: 10 });
+    if(cell.r > 30) {
+      const newR = cell.r / Math.SQRT2; cell.r = newR;
+      newCells.push({ x: cell.x, y: cell.y, r: newR });
     }
   });
-  myCells = myCells.concat(newCells);
-  canSplit--;
+  myCells = myCells.concat(newCells); canSplit--;
 }
 
 function update(dt) {
   if(!isPlaying) return;
-  
-  // Movimento das células
   let mdx = 0, mdy = 0;
   if(joy.active) { mdx = joy.x; mdy = joy.y; }
 
   let totalMass = 0;
   myCells.forEach(cell => {
-    cell.x += mdx * getSpeed(cell.r) * dt * 60;
-    cell.y += mdy * getSpeed(cell.r) * dt * 60;
+    const speed = Math.max(2, 8 - Math.log2(cell.r) * 0.5);
+    cell.x += mdx * speed * dt * 60; cell.y += mdy * speed * dt * 60;
     cell.x = Math.max(cell.r, Math.min(worldSize-cell.r, cell.x));
     cell.y = Math.max(cell.r, Math.min(worldSize-cell.r, cell.y));
-    totalMass += (cell.r * cell.r) / 10; // MASSA MATEMÁTICA (Não cresce rápido)
+    totalMass += (cell.r * cell.r) / 10;
   });
   myMass = totalMass;
 
-  // Física de Repulsão (Células não se sobrepõem)
   for(let i=0; i<myCells.length; i++) {
     for(let j=i+1; j<myCells.length; j++) {
       let c1 = myCells[i], c2 = myCells[j];
       let d = Math.hypot(c1.x-c2.x, c1.y-c2.y);
       if(d < c1.r + c2.r) {
         let angle = Math.atan2(c2.y-c1.y, c2.x-c1.x);
-        c1.x -= Math.cos(angle)*2; c1.y -= Math.sin(angle)*2;
-        c2.x += Math.cos(angle)*2; c2.y += Math.sin(angle)*2;
+        c1.x -= Math.cos(angle)*1.5; c1.y -= Math.sin(angle)*1.5;
+        c2.x += Math.cos(angle)*1.5; c2.y += Math.sin(angle)*1.5;
       }
     }
   }
 
-  // Comer Comida
   for(let i=foods.length-1; i>=0; i--) {
     let f = foods[i];
     myCells.forEach(c => {
       if(Math.hypot(c.x-f.x, c.y-f.y) < c.r - f.r*0.5) {
-        c.r = Math.sqrt(c.r*c.r + 4); // Cada comida dá 4 de raio
+        c.r = Math.sqrt(c.r*c.r + 4);
         foods.splice(i,1); foods.push({x: Math.random()*worldSize, y: Math.random()*worldSize, r: 5, color: `hsl(${Math.random()*360}, 80%, 60%)`});
       }
     });
   }
 
-  // Vírus (Explode a célula)
   for(let i=viruses.length-1; i>=0; i--) {
     let v = viruses[i];
-    myCells.forEach((c, idx) => {
+    myCells.forEach((c) => {
       if(c.r > v.r && Math.hypot(c.x-v.x, c.y-v.y) < c.r) {
-        // Divide em 5 pedaços sem morrer
-        for(let k=0; k<5; k++) {
-          myCells.push({ x: c.x + Math.random()*40-20, y: c.y + Math.random()*40-20, r: c.r*0.4 });
-        }
-        c.r = c.r*0.4; // A célula original diminui
-        viruses.splice(i,1); viruses.push({x: Math.random()*worldSize, y: Math.random()*worldSize, r: 25});
+        for(let k=0; k<5; k++) myCells.push({ x: c.x + Math.random()*40-20, y: c.y + Math.random()*40-20, r: c.r*0.4 });
+        c.r = c.r*0.4; viruses.splice(i,1); viruses.push({x: Math.random()*worldSize, y: Math.random()*worldSize, r: 25});
       }
     });
   }
 
-  // Câmera segue a célula principal (a primeira)
   let mainC = myCells[0];
-  camera.x += (mainC.x - camera.x) * 0.1;
-  camera.y += (mainC.y - camera.y) * 0.1;
-  camera.zoom += (Math.max(0.4, 1.2 - mainC.r*0.005) - camera.zoom) * 0.1;
-
-  document.getElementById('massVal').textContent = Math.round(myMass);
+  if(mainC) {
+    camera.x += (mainC.x - camera.x) * 0.1; camera.y += (mainC.y - camera.y) * 0.1;
+    camera.zoom += (Math.max(0.4, 1.2 - mainC.r*0.005) - camera.zoom) * 0.1;
+    document.getElementById('massVal').textContent = Math.round(myMass);
+  }
 }
 
 function draw() {
-  ctx.fillStyle = '#0d1c21'; ctx.fillRect(0,0,W,H); // Fundo escuro do Mitosis
+  ctx.fillStyle = '#0d1c21'; ctx.fillRect(0,0,W,H);
   if(!isPlaying || !myCells[0]) return;
-  
-  ctx.save();
-  ctx.translate(W/2, H/2); ctx.scale(camera.zoom, camera.zoom); ctx.translate(-camera.x, -camera.y);
+  ctx.save(); ctx.translate(W/2, H/2); ctx.scale(camera.zoom, camera.zoom); ctx.translate(-camera.x, -camera.y);
 
-  // Comidas (Pequenos pontinhos brilhantes)
   foods.forEach(f => { ctx.beginPath(); ctx.fillStyle = f.color; ctx.arc(f.x, f.y, f.r, 0, Math.PI*2); ctx.fill(); });
-  
-  // Vírus (Espinhos verdes)
   viruses.forEach(v => {
     ctx.beginPath(); ctx.fillStyle = '#4dff9e'; 
-    for(let i=0; i<12; i++) {
-      let angle = (i/12) * Math.PI * 2;
-      let rDist = v.r + (i%2===0 ? 8 : 0);
-      ctx.lineTo(v.x + Math.cos(angle)*rDist, v.y + Math.sin(angle)*rDist);
-    }
+    for(let i=0; i<12; i++) { let a = (i/12)*Math.PI*2; let rDist = v.r + (i%2===0 ? 8 : 0); ctx.lineTo(v.x + Math.cos(a)*rDist, v.y + Math.sin(a)*rDist); }
     ctx.closePath(); ctx.fill();
   });
-
-  // Outros Jogadores (Bots do servidor)
+  
   for(let id in players) {
-    if(id === myId) continue;
-    const p = players[id];
+    if(id === myId) continue; const p = players[id];
     ctx.beginPath(); ctx.fillStyle = p.color; ctx.arc(p.x, p.y, p.r, 0, Math.PI*2); ctx.fill();
     ctx.fillStyle = '#fff'; ctx.font = 'bold 14px sans-serif'; ctx.textAlign = 'center'; ctx.fillText(p.name, p.x, p.y - p.r - 10);
   }
 
-  // Nossas Células (Múltiplas)
   myCells.forEach((c, i) => {
     ctx.beginPath(); ctx.fillStyle = '#4dff9e'; ctx.arc(c.x, c.y, c.r, 0, Math.PI*2); ctx.fill();
-    ctx.lineWidth = 3; ctx.strokeStyle = i === 0 ? '#fff' : '#0004'; ctx.stroke(); // Borda branca na principal
-    
-    // Se tiver Skin equipada, desenha
+    ctx.lineWidth = 3; ctx.strokeStyle = i === 0 ? '#fff' : '#0004'; ctx.stroke();
     if(save.equippedSkin !== 'none' && customImage) {
       ctx.save(); ctx.beginPath(); ctx.arc(c.x, c.y, c.r*0.8, 0, Math.PI*2); ctx.clip(); ctx.drawImage(customImage, c.x-c.r*0.8, c.y-c.r*0.8, c.r*1.6, c.r*1.6); ctx.restore();
     }
-    
     ctx.fillStyle = '#fff'; ctx.font = 'bold 14px sans-serif'; ctx.textAlign = 'center'; ctx.fillText(currentAccount, c.x, c.y - c.r - 10);
   });
-
   ctx.restore();
 }
 
-// CONTROLES E LOOP
 function loop(t) { const dt = Math.min(0.05, (t - lastTime)/1000 || 0); lastTime = t; update(dt); draw(); requestAnimationFrame(loop); }
 requestAnimationFrame(loop);
 
@@ -480,12 +402,7 @@ joyEl.addEventListener('pointerup', () => { joy.active = false; joy.x = 0; joy.y
 function moveJoy(cx, cy) { const rect = joyEl.getBoundingClientRect(); let dx = cx - (rect.left + rect.width/2), dy = cy - (rect.top + rect.height/2); const max = rect.width/2, l = Math.hypot(dx,dy); if(l > max) { dx = dx/l*max; dy = dy/l*max; } joyKnob.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`; joy.x = dx/max; joy.y = dy/max; }
 
 document.getElementById('splitBtn').onclick = doSplit;
-document.getElementById('potionBtn').onclick = () => { /* Lógica da poção de cola: junta todas em uma */ if(myCells.length > 1) { let newR = Math.sqrt(myCells.reduce((acc, c) => acc + c.r*c.r, 0)); myCells = [{x: myCells[0].x, y: myCells[0].y, r: newR}]; alert("Poção de Cola usada!"); } };
-
-const chatBox = document.getElementById('chatBox');
-document.getElementById('chatBtn').onclick = () => { chatBox.style.display = chatBox.style.display === 'flex' ? 'none' : 'flex'; };
-document.getElementById('sendChat').onclick = () => { const msg = document.getElementById('chatInput').value.trim(); if(msg && socket) { socket.emit('chatMessage', msg); document.getElementById('chatInput').value = ''; chatBox.style.display = 'none'; } };
-function addChatMsg(txt) { const log = document.getElementById('chatLog'); const el = document.createElement('div'); el.textContent = txt; log.appendChild(el); setTimeout(() => el.remove(), 5000); }
+document.getElementById('potionBtn').onclick = () => { if(myCells.length > 1) { let newR = Math.sqrt(myCells.reduce((acc, c) => acc + c.r*c.r, 0)); myCells = [{x: myCells[0].x, y: myCells[0].y, r: newR}]; alert("Poção de Cola usada!"); } };
 
 function resize() { const dpr = window.devicePixelRatio||1; W = window.innerWidth; H = window.innerHeight; canvas.width = W*dpr; canvas.height = H*dpr; canvas.style.width = W+'px'; canvas.style.height = H+'px'; ctx.scale(dpr,dpr); }
 window.addEventListener('resize', resize); resize();
