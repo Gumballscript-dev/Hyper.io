@@ -3,285 +3,406 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>hyper.io - Multiplayer</title>
-<!-- Importa a biblioteca de conexão em tempo real -->
+<title>hyper.io - Evolução Online</title>
 <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 <style>
-  :root { --accent:#4dff9e; --accent2:#7ef0c0; --gold:#ffd166; --danger:#ff6b6b; --card:#0e2a3d; --text:#c9ffe9; }
+  :root { --bg1:#050a10; --accent:#4dff9e; --accent2:#7ef0c0; --gold:#ffd166; --gem:#c77dff; --danger:#ff6b6b; --card:#0e2a3d; --cardBorder:#2a6d8b; --text:#c9ffe9; --muted:#8fb8cc; }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { margin:0; height:100%; overflow:hidden; background:#04101a; font-family: system-ui, sans-serif; touch-action:none; user-select:none; color:var(--text); }
   #gameCanvas { display:block; width:100vw; height:100vh; }
+  #ui { position:fixed; inset:0; pointer-events:none; z-index: 10; }
+  .screen { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:flex-start; background: radial-gradient(circle at 50% 30%, #163a52, #04101a 75%); pointer-events:auto; overflow-y:auto; padding:18px 0 80px; }
   .hidden { display:none !important; }
-  .screen { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; background: radial-gradient(circle at 50% 30%, #163a52, #04101a 75%); pointer-events:auto; z-index:10; }
-  .login-card { width:100%; max-width:360px; background:var(--card); border:2px solid var(--accent2); border-radius:22px; padding:22px; display:flex; flex-direction:column; gap:12px; }
-  .login-card input { width:100%; padding:14px; border-radius:12px; border:2px solid #2a6d8b; background:#081824; color:var(--text); font-size:16px; outline:none; }
-  .login-card button { padding:14px; border-radius:999px; border:none; background:linear-gradient(135deg, #9effd4, #27b67a); color:#042; font-size:16px; font-weight:900; cursor:pointer; }
-  .play-btn { width:150px; height:150px; border-radius:50%; border:6px solid var(--accent2); background: radial-gradient(circle at 35% 30%, #9effd4, #27b67a 60%, #0a6b45); color:#042; font-size:27px; font-weight:900; cursor:pointer; margin-top:20px; }
   
-  /* HUD */
-  #hud { position:absolute; inset:0; pointer-events:none; z-index:20; }
-  #leaderboard { position:absolute; top:16px; right:16px; background:#000a; padding:10px; border-radius:10px; font-size:12px; border:1px solid #fff3; min-width:150px; }
-  #leaderboard h3 { margin:0 0 5px 0; color:var(--gold); font-size:14px; text-align:center; }
-  #massHud { position:absolute; top:16px; left:16px; color:#fff; font-weight:900; font-size:18px; text-shadow:0 2px 5px #000; }
-  
-  #actions { position:absolute; left:16px; bottom:calc(20px + env(safe-area-inset-bottom)); display:flex; flex-direction:column; gap:12px; pointer-events:auto; }
-  .action-btn { width:70px; height:70px; border-radius:50%; border:3px solid var(--accent2); background: radial-gradient(circle at 35% 30%, #9effd4, #27b67a 60%, #0a6b45); color:#042; font-size:11px; font-weight:900; cursor:pointer; }
+  .currency-bar { position:absolute; top:calc(16px + env(safe-area-inset-top)); left:16px; display:flex; flex-direction:column; gap:6px; z-index:5; }
+  .currency { display:flex; align-items:center; gap:8px; font-size:18px; font-weight:800; text-shadow:0 2px 5px #000; background:#0008; padding:4px 12px; border-radius:20px; border:1px solid #ffffff22; }
+  .coin-icon { width:22px; height:22px; border-radius:50%; background: radial-gradient(circle at 35% 30%, #fff6a8, #ffc400 60%, #b88600); box-shadow:0 0 10px #ffc400; }
+  .gem-icon { width:22px; height:22px; background: linear-gradient(135deg, #e0c3fc, #8ec5fc); clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%); box-shadow:0 0 10px #c77dff; }
+
+  .title { color:var(--text); font-size:42px; font-weight:900; text-align:center; line-height:1; text-shadow:0 0 25px #27b67a; margin:10px 0; letter-spacing:1px; }
+  .title small { font-size:15px; color:#8fd; font-weight:600; letter-spacing:0; }
+  .play-btn { width:150px; height:150px; border-radius:50%; border:6px solid var(--accent2); background: radial-gradient(circle at 35% 30%, #9effd4, #27b67a 60%, #0a6b45); color:#042; font-size:27px; font-weight:900; box-shadow:0 0 35px #27b67a99, inset 0 -8px 18px #0004; cursor:pointer; pointer-events:auto; margin-top:12px; }
+  .play-btn:active { transform:scale(0.96); }
+
+  .float-btn { position:absolute; padding:10px 16px; border-radius:14px; font-size:13px; font-weight:900; pointer-events:auto; cursor:pointer; box-shadow:0 0 15px #0006; display:flex; align-items:center; gap:6px; border:2px solid; z-index:20; }
+  #upgradesBtn { top:calc(70px + env(safe-area-inset-top)); left:16px; border-color:var(--gold); background:#1b3b52ee; color:var(--gold); }
+  #secretBtn { top:calc(70px + env(safe-area-inset-top)); right:16px; border-color:var(--gem); background:#2a1640ee; color:#d9b8ff; }
+  #dailyBtn { top:calc(70px + env(safe-area-inset-top)); left:50%; transform:translateX(-50%); border-color:var(--danger); background:#3d1515ee; color:#ffb3b3; }
+  #settingsBtn { bottom:calc(16px + env(safe-area-inset-bottom)); right:16px; border-color:var(--cardBorder); background:#0e2a3dee; color:var(--text); }
+
+  .grid2 { display:grid; grid-template-columns:repeat(2, 1fr); gap:14px; padding:0 20px; width:100%; max-width:520px; }
+  .card { background:var(--card); border:2px solid var(--cardBorder); border-radius:18px; padding:12px 10px; display:flex; flex-direction:column; align-items:center; gap:8px; color:var(--text); pointer-events:auto; }
+  .card.equipped { border-color:var(--gold); box-shadow:0 0 22px #ffd16688; }
+  .card-btn { padding:8px 12px; border-radius:999px; border:2px solid var(--accent2); background:#1b3b52; color:#baffdc; font-size:11px; font-weight:900; cursor:pointer; width:100%; }
+  .skin-preview { width:70px; height:70px; display:flex; align-items:center; justify-content:center; background: radial-gradient(circle at 35% 30%, #9effd4, #27b67a 60%, #0a6b45); border-radius:50%; border:3px solid #baffdc; overflow:hidden; }
+  .skin-preview img { width:100%; height:100%; object-fit:cover; }
+
+  #lobbyHud { position:absolute; bottom:calc(20px + env(safe-area-inset-bottom)); left:16px; color:var(--gold); font-size:12px; font-weight:700; pointer-events:none; line-height:1.5; text-shadow:0 2px 4px #000; }
+
+  #actions { position:absolute; left:16px; bottom:calc(140px + env(safe-area-inset-bottom)); display:flex; flex-direction:column; gap:12px; pointer-events:none; z-index:20; }
+  .action-btn { width:70px; height:70px; border-radius:50%; border:3px solid var(--accent2); background: radial-gradient(circle at 35% 30%, #9effd4, #27b67a 60%, #0a6b45); color:#042; font-size:11px; font-weight:900; line-height:1.1; pointer-events:auto; cursor:pointer; box-shadow:0 0 18px #27b67a99, inset 0 -5px 10px #0004; }
   .action-btn:active { transform:scale(0.9); }
-  
-  #joystick { position:absolute; right:20px; bottom:calc(20px + env(safe-area-inset-bottom)); width:130px; height:130px; border-radius:50%; border:3px solid #7ef0c0aa; background:#0e2a3daa; pointer-events:auto; touch-action:none; }
+  .action-btn:disabled { opacity:0.35; }
+
+  #joystick { position:absolute; right:20px; bottom:calc(20px + env(safe-area-inset-bottom)); width:130px; height:130px; border-radius:50%; border:3px solid #7ef0c0aa; background:#0e2a3daa; pointer-events:auto; z-index:20; touch-action:none; }
   #joyKnob { position:absolute; left:50%; top:50%; width:56px; height:56px; border-radius:50%; border:3px solid #baffdc; background: radial-gradient(circle at 35% 30%, #9effd4, #27b67a 60%, #0a6b45); transform:translate(-50%,-50%); pointer-events:none; }
 
-  /* Chat UI */
-  #chatBtn { position:absolute; right:16px; bottom:calc(160px + env(safe-area-inset-bottom)); width:50px; height:50px; border-radius:50%; background:#0e2a3d; border:2px solid #7ef0c0; color:#fff; font-size:22px; pointer-events:auto; z-index:20; display:flex; align-items:center; justify-content:center; }
-  #chatBox { position:absolute; bottom:calc(220px + env(safe-area-inset-bottom)); right:16px; width:250px; background:#000d; border:2px solid #7ef0c0; border-radius:12px; padding:10px; display:none; flex-direction:column; gap:8px; z-index:25; pointer-events:auto; }
+  #chatBtn { position:absolute; right:16px; bottom:calc(160px + env(safe-area-inset-bottom)); width:46px; height:46px; border-radius:50%; background:#0e2a3d; border:2px solid #7ef0c0; color:#fff; font-size:20px; pointer-events:auto; z-index:20; display:flex; align-items:center; justify-content:center; }
+  #chatBox { position:absolute; bottom:calc(220px + env(safe-area-inset-bottom)); left:50%; transform:translateX(-50%); width:90%; max-width:300px; background:#000c; border:2px solid #7ef0c0; border-radius:12px; padding:10px; display:none; flex-direction:column; gap:8px; z-index:25; pointer-events:auto; }
   #chatBox input { width:100%; padding:10px; border-radius:8px; border:none; background:#fff; color:#000; font-size:14px; }
   #chatBox button { padding:8px; border-radius:8px; border:none; background:#27b67a; color:#fff; font-weight:bold; }
-  
   #chatLog { position:absolute; bottom:calc(20px + env(safe-area-inset-bottom)); left:16px; color:#fff; font-size:12px; font-weight:bold; text-shadow:0 1px 3px #000; display:flex; flex-direction:column; gap:2px; pointer-events:none; z-index:15; width:200px; }
+
+  #leaderboard { position:absolute; top:16px; right:16px; background:#000a; padding:10px; border-radius:10px; font-size:12px; border:1px solid #fff3; min-width:150px; pointer-events:none; }
+  #leaderboard h3 { margin:0 0 5px 0; color:var(--gold); font-size:14px; text-align:center; }
+  #massHud { position:absolute; top:16px; left:16px; color:#fff; font-weight:900; font-size:18px; text-shadow:0 2px 5px #000; pointer-events:none;}
+
+  .login-card { width:100%; max-width:360px; background:var(--card); border:2px solid var(--cardBorder); border-radius:22px; padding:22px 20px; margin-top:20px; display:flex; flex-direction:column; gap:12px; z-index:30; }
+  .login-card input { width:100%; padding:14px; border-radius:12px; border:2px solid var(--cardBorder); background:#081824; color:var(--text); font-size:16px; outline:none; }
+  .login-card button { padding:14px; border-radius:999px; border:none; background:linear-gradient(135deg, #9effd4, #27b67a); color:#042; font-size:16px; font-weight:900; cursor:pointer; }
+  .back-btn { margin-top:16px; padding:12px 30px; border-radius:999px; border:2px solid var(--accent2); background:transparent; color:var(--text); font-size:15px; font-weight:800; pointer-events:auto; z-index:30; }
+  .banner { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); background:#04101acc; border:2px solid var(--gold); border-radius:16px; padding:14px 24px; color:var(--gold); font-size:18px; font-weight:900; text-align:center; pointer-events:none; z-index:30; animation: pop 2s ease forwards; }
+  @keyframes pop { 0% { opacity:0; transform:translate(-50%,-50%) scale(0.7); } 20% { opacity:1; transform:translate(-50%,-50%) scale(1.05); } 80% { opacity:1; transform:translate(-50%,-50%) scale(1); } 100% { opacity:0; transform:translate(-50%,-50%) scale(1.1); } }
 </style>
 </head>
 <body>
 <canvas id="gameCanvas"></canvas>
 
-<!-- MENU INICIAL -->
-<div id="menuScreen" class="screen">
-  <h1 style="color:#fff; font-size:42px; text-shadow:0 0 20px #27b67a; margin-bottom:10px;">hyper.io</h1>
-  <div class="login-card">
-    <input id="nameInput" type="text" placeholder="Seu nome de jogador" maxlength="12">
-    <button id="playOnlineBtn">JOGAR ONLINE</button>
+<div id="ui">
+  <!-- LOGIN -->
+  <div id="authScreen" class="screen">
+    <div class="title">hyper.io<br><small>Evolução Online</small></div>
+    <div class="login-card" id="loginCard">
+      <h2 style="text-align:center; margin:0 0 10px; color:#c9ffe9;">Entrar</h2>
+      <input id="logName" type="text" placeholder="Nome" maxlength="16">
+      <input id="logPass" type="password" placeholder="Senha" maxlength="32">
+      <div id="logError" style="color:red; font-size:12px; text-align:center;"></div>
+      <button id="loginBtn">Entrar</button>
+      <div style="text-align:center; font-size:13px; margin-top:10px;">Não tem conta? <b id="toRegister" style="color:var(--gold); cursor:pointer;">Cadastre-se</b></div>
+    </div>
+    <div class="login-card hidden" id="registerCard">
+      <h2 style="text-align:center; margin:0 0 10px; color:#c9ffe9;">Criar Conta</h2>
+      <input id="regName" type="text" placeholder="Nome" maxlength="16">
+      <input id="regPass" type="password" placeholder="Senha" maxlength="32">
+      <input id="regPass2" type="password" placeholder="Confirmar Senha" maxlength="32">
+      <div id="regError" style="color:red; font-size:12px; text-align:center;"></div>
+      <button id="registerBtn">Criar Conta</button>
+      <div style="text-align:center; font-size:13px; margin-top:10px;">Já tem conta? <b id="toLogin" style="color:var(--gold); cursor:pointer;">Fazer Login</b></div>
+    </div>
   </div>
-  <div id="statusMsg" style="margin-top:15px; font-size:13px; color:var(--gold); text-align:center; font-weight:bold;"></div>
-</div>
 
-<!-- HUD DO JOGO -->
-<div id="hud" class="hidden">
-  <div id="massHud">Massa: <span id="massVal">0</span></div>
-  <div id="leaderboard"><h3>🏆 TOP 10</h3><div id="lbList"></div></div>
-  
-  <div id="actions">
-    <button id="splitBtn" class="action-btn">DIVIDIR</button>
-    <button id="injectBtn" class="action-btn">INJETAR</button>
+  <!-- LOBBY -->
+  <div id="lobby" class="screen hidden">
+    <div class="currency-bar">
+      <div class="currency"><div class="coin-icon"></div><span id="coinLobby">0</span></div>
+      <div class="currency"><div class="gem-icon"></div><span id="gemLobby">0</span></div>
+    </div>
+    
+    <button id="upgradesBtn" class="float-btn">⬆️ MELHORIAS</button>
+    <button id="secretBtn" class="float-btn">🔐 SECRETO</button>
+    <button id="dailyBtn" class="float-btn">🎁 COFRE</button>
+
+    <div class="title" style="margin-top:120px;">hyper.io<br><small id="welcomeName">célula</small></div>
+    
+    <div class="section-title" style="color:var(--gold); margin-top:20px; font-weight:900;">Modo de jogo</div>
+    <div style="display:flex; justify-content:center; padding:0 20px;">
+       <button class="tab active" style="font-size:16px; padding:15px 30px; border:2px solid var(--gold); color:var(--gold); border-radius:999px; background:#1b3b52;">🌐 MULTIPLAYER ONLINE</button>
+    </div>
+
+    <button id="playBtn" class="play-btn" style="margin-top:20px;">JOGAR</button>
+
+    <div id="lobbyHud">
+      Recorde: <span id="recSize">0</span> Tam<br>
+      Nível: <span id="lvlLobby">1</span>
+    </div>
+
+    <button id="settingsBtn" class="float-btn">⚙️ Configurações</button>
   </div>
-  
-  <div id="joystick"><div id="joyKnob"></div></div>
-  
-  <div id="chatBtn">💬</div>
-  <div id="chatBox"><input id="chatInput" type="text" placeholder="Mensagem..." maxlength="30"><button id="sendChat">Enviar</button></div>
-  <div id="chatLog"></div>
+
+  <!-- MELHORIAS -->
+  <div id="upgradesScreen" class="screen hidden">
+    <div class="title" style="font-size:24px;">Melhorias</div>
+    <div class="tabs">
+      <button class="tab active" data-tab="skins">SKINS</button>
+      <button class="tab" data-tab="potions">POÇÕES</button>
+      <button class="tab" data-tab="equips">EQUIPAMENTOS</button>
+    </div>
+    <div id="tabSkins" class="tab-content">
+      <div class="grid2" id="skinsGrid"></div>
+      <div style="text-align:center; width:100%;"><button id="createSkinBtn" class="card-btn" style="max-width:300px; margin-top:15px; background:var(--gold); color:#000;">🎨 CRIAR SKIN (100 🪙)</button></div>
+    </div>
+    <div id="tabPotions" class="tab-content hidden"><div class="grid2" id="potionsGrid"></div></div>
+    <div id="tabEquips" class="tab-content hidden"><div class="grid2" id="equipGrid"></div></div>
+    <button class="back-btn" data-back="lobby">VOLTAR</button>
+  </div>
+
+  <!-- CRIAR SKIN -->
+  <div id="createSkinScreen" class="screen hidden">
+    <div class="title" style="font-size:24px;">Criar Skin</div>
+    <div style="font-size:12px; color:var(--muted); margin-bottom:10px;">Desenhe ou envie imagem (Custo: 100 🪙)</div>
+    <div id="paintGrid"></div>
+    <div style="display:flex; gap:10px; margin-top:15px;">
+      <button class="tab" id="clearDraw">LIMPAR</button>
+      <button class="tab" id="uploadBtn">ENVIAR IMAGEM</button>
+      <input type="file" id="uploadInput" accept="image/*" class="hidden">
+    </div>
+    <div class="row" style="margin-top:15px; display:flex; align-items:center; gap:10px;"><span>Prévia:</span> <div id="createPreview"></div></div>
+    <div style="display:flex; gap:10px; margin-top:20px;">
+      <button id="saveSkinBtn" class="card-btn" style="background:var(--gold); color:#000;">SALVAR</button>
+      <button class="back-btn" data-back="upgradesScreen" style="margin:0;">VOLTAR</button>
+    </div>
+  </div>
+
+  <!-- CONFIGURAÇÕES -->
+  <div id="settingsScreen" class="screen hidden">
+    <div class="title" style="font-size:24px;">Configurações</div>
+    <div class="login-card">
+      <div style="font-size:14px; font-weight:bold; color:var(--gold);">Tema</div>
+      <div style="display:flex; gap:10px;"><button class="tab" id="themeDark">Escuro</button><button class="tab" id="themeLight">Claro</button></div>
+      <div style="font-size:14px; font-weight:bold; color:var(--gold); margin-top:10px;">Idioma</div>
+      <div style="display:flex; gap:10px;"><button class="tab active">PT-BR</button><button class="tab">English</button></div>
+      <div style="text-align:center; margin-top:20px; font-size:12px; color:var(--muted);">Game by: miranhaX<br>Discord: miranhaX_00</div>
+    </div>
+    <button class="back-btn" data-back="lobby">VOLTAR</button>
+  </div>
+
+  <!-- HUD DO JOGO -->
+  <div id="hud" class="hidden">
+    <div id="massHud">Massa: <span id="massVal">0</span></div>
+    <div id="leaderboard"><h3>🏆 TOP 10</h3><div id="lbList"></div></div>
+    <div id="actions">
+      <button id="splitBtn" class="action-btn">DIVIDIR</button>
+      <button id="injectBtn" class="action-btn">INJETAR</button>
+      <button id="adminMassBtn" class="action-btn hidden" style="border-color:var(--gold); background:gold;">+100</button>
+    </div>
+    <div id="joystick"><div id="joyKnob"></div></div>
+    <div id="chatBtn">💬</div>
+    <div id="chatBox"><input id="chatInput" type="text" placeholder="Mensagem..."><button id="sendChat">Enviar</button></div>
+    <div id="chatLog"></div>
+  </div>
+  <div id="bannerSlot"></div>
 </div>
 
 <script>
-// ==========================================
-// CONEXÃO COM O SERVIDOR (RENDER)
-// ==========================================
-const SERVER_URL = 'https://hyper-io-server.onrender.com'; 
-
+const SERVER_URL = 'https://hyper-io-server.onrender.com';
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
-let W, H;
-
-let socket;
-let myId = null;
-let worldSize = 4000;
-let players = {};
-let foods = [];
-
+const bannerSlot = document.getElementById('bannerSlot');
+let W, H, socket, myId = null, worldSize = 4000;
+let players = {}, foods = [];
 let camera = { x: 0, y: 0, zoom: 1 };
-let targetX = 0, targetY = 0;
-
-// Controles
 let joy = { active: false, x: 0, y: 0 };
-let lastMoveDir = { x: 1, y: 0 };
+let lastTime = 0, state = 'auth', currentAccount = null;
+let customImage = null;
 
-function resize() { 
-  const dpr = window.devicePixelRatio || 1;
-  W = window.innerWidth; H = window.innerHeight; 
-  canvas.width = W * dpr; canvas.height = H * dpr; 
-  canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
-  ctx.scale(dpr, dpr); 
+const ADMIN_PASSWORD = 'lop09lopleo';
+let save = { coins: 0, gems: 0, ownedSkins: ['none'], equippedSkin: 'none', customSkin: null, recordSize: 0, level: 1, admin: false, lastDaily: 0 };
+
+function getAccounts() { try { return JSON.parse(localStorage.getItem('mitosis_accounts') || '{}'); } catch(e) { return {}; } }
+function setAccounts(a) { localStorage.setItem('mitosis_accounts', JSON.stringify(a)); }
+function saveFor(n) { try { return JSON.parse(localStorage.getItem('mitosis_save_'+n) || 'null'); } catch(e) { return null; } }
+function setSaveFor(n, o) { localStorage.setItem('mitosis_save_'+n, JSON.stringify(o)); }
+async function hashPass(p) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(p));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
 }
-window.addEventListener('resize', resize); resize();
+function persist() { if (currentAccount) setSaveFor(currentAccount, save); updateCurrencyUI(); }
+function updateCurrencyUI() {
+  document.getElementById('coinLobby').textContent = save.coins;
+  document.getElementById('gemLobby').textContent = save.gems;
+}
+function showScreen(id) { document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden')); document.getElementById(id).classList.remove('hidden'); }
+document.querySelectorAll('[data-back]').forEach(b => b.addEventListener('click', () => showScreen(b.dataset.back)));
 
-// Botão de Jogar
-document.getElementById('playOnlineBtn').onclick = () => {
-  const name = document.getElementById('nameInput').value.trim() || "Jogador";
-  const status = document.getElementById('statusMsg');
-  
-  status.textContent = "Conectando ao servidor... (Pode demorar até 50s se estiver dormindo)";
-  document.getElementById('playOnlineBtn').style.opacity = '0.5';
-  
-  // Conecta ao servidor Render
+function loginAs(name) {
+  currentAccount = name;
+  save = Object.assign({coins:0, gems:0, ownedSkins:['none'], equippedSkin:'none', customSkin:null, recordSize:0, level:1, admin:false, lastDaily:0}, saveFor(name) || {});
+  if(save.customSkin) { const img = new Image(); img.onload = () => customImage = img; img.src = save.customSkin; }
+  document.getElementById('welcomeName').textContent = "Olá, " + name;
+  document.getElementById('recSize').textContent = Math.round(save.recordSize);
+  document.getElementById('lvlLobby').textContent = save.level;
+  updateCurrencyUI();
+  showScreen('lobby'); state = 'lobby';
+}
+
+document.getElementById('toRegister').onclick = () => { document.getElementById('loginCard').classList.add('hidden'); document.getElementById('registerCard').classList.remove('hidden'); };
+document.getElementById('toLogin').onclick = () => { document.getElementById('registerCard').classList.add('hidden'); document.getElementById('loginCard').classList.remove('hidden'); };
+document.getElementById('loginBtn').onclick = async () => {
+  const n = document.getElementById('logName').value.trim(), p = document.getElementById('logPass').value;
+  const accs = getAccounts();
+  if(!accs[n.toLowerCase()]) return document.getElementById('logError').textContent = 'Conta não encontrada.';
+  if(accs[n.toLowerCase()].hash !== await hashPass(p)) return document.getElementById('logError').textContent = 'Senha incorreta.';
+  loginAs(n);
+};
+document.getElementById('registerBtn').onclick = async () => {
+  const n = document.getElementById('regName').value.trim(), p1 = document.getElementById('regPass').value, p2 = document.getElementById('regPass2').value;
+  const accs = getAccounts();
+  if(n.length < 2) return document.getElementById('regError').textContent = 'Nome muito curto.';
+  if(p1.length < 4) return document.getElementById('regError').textContent = 'Senha muito curta.';
+  if(p1 !== p2) return document.getElementById('regError').textContent = 'Senhas não batem.';
+  if(accs[n.toLowerCase()]) return document.getElementById('regError').textContent = 'Nome já existe.';
+  accs[n.toLowerCase()] = { name: n, hash: await hashPass(p1) }; setAccounts(accs); loginAs(n);
+};
+
+document.getElementById('settingsBtn').onclick = () => showScreen('settingsScreen');
+document.getElementById('upgradesBtn').onclick = () => { renderShop(); showScreen('upgradesScreen'); };
+document.getElementById('secretBtn').onclick = () => {
+  const p = prompt("Senha de Admin:");
+  if(p === ADMIN_PASSWORD) { save.admin = true; save.coins += 50000; persist(); showBanner("👑 ADMIN ATIVADO!"); }
+};
+document.getElementById('dailyBtn').onclick = () => {
+  const now = Date.now();
+  if(now - save.lastDaily > 86400000) { save.coins += 500; save.gems += 5; save.lastDaily = now; persist(); showBanner("🎁 Cofre: +500 Moedas, +5 Gemas!"); } 
+  else { showBanner("⏳ Já pegou hoje!"); }
+};
+function renderShop() {
+  const gridSkins = document.getElementById('skinsGrid');
+  gridSkins.innerHTML = `
+    <div class="card ${save.equippedSkin === 'custom' ? 'equipped' : ''}">
+      <div class="skin-preview">${save.customSkin ? `<img src="${save.customSkin}">` : '?'}</div>
+      <div style="font-size:12px;">Minha Skin</div>
+      <button class="card-btn" onclick="equipSkin('custom')">EQUIPAR</button>
+    </div>
+    <div class="card ${save.equippedSkin === 'none' ? 'equipped' : ''}">
+      <div class="skin-preview" style="background:#4dff9e;"></div>
+      <div style="font-size:12px;">Padrão</div>
+      <button class="card-btn" onclick="equipSkin('none')">EQUIPAR</button>
+    </div>`;
+}
+window.equipSkin = function(id) { save.equippedSkin = id; persist(); renderShop(); };
+
+document.getElementById('createSkinBtn').onclick = () => showScreen('createSkinScreen');
+document.getElementById('uploadBtn').onclick = () => document.getElementById('uploadInput').click();
+document.getElementById('uploadInput').onchange = (e) => {
+  const file = e.target.files[0]; if(!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    const img = new Image();
+    img.onload = () => {
+      const c = document.createElement('canvas'); c.width = 128; c.height = 128;
+      const ctxTemp = c.getContext('2d');
+      const side = Math.min(img.width, img.height);
+      ctxTemp.drawImage(img, (img.width-side)/2, (img.height-side)/2, side, side, 0, 0, 128, 128);
+      const dataUrl = c.toDataURL('image/png');
+      document.getElementById('createPreview').innerHTML = `<img src="${dataUrl}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+      document.getElementById('saveSkinBtn').onclick = () => {
+        if(save.coins < 100) return alert("Precisa de 100 moedas!");
+        save.coins -= 100; save.customSkin = dataUrl; save.equippedSkin = 'custom'; persist();
+        const i = new Image(); i.onload = () => customImage = i; i.src = dataUrl;
+        showScreen('upgradesScreen'); showBanner("Skin Salva!");
+      };
+    }; img.src = ev.target.result;
+  }; reader.readAsDataURL(file);
+};
+
+// JOGAR ONLINE
+document.getElementById('playBtn').onclick = () => {
+  showScreen('hud');
   socket = io(SERVER_URL, { transports: ['websocket', 'polling'] });
 
-  socket.on('connect', () => {
-    status.textContent = "Conectado! Entrando...";
-  });
-
   socket.on('init', (data) => {
-    myId = data.myId;
-    players = data.players;
-    foods = data.foods;
-    worldSize = data.worldSize;
-    socket.emit('setName', name);
-    
+    myId = data.myId; players = data.players; foods = data.foods; worldSize = data.worldSize;
+    socket.emit('setName', currentAccount);
     if(players[myId]) { camera.x = players[myId].x; camera.y = players[myId].y; }
-    
-    document.getElementById('menuScreen').classList.add('hidden');
-    document.getElementById('hud').classList.remove('hidden');
   });
 
-  // Eventos do servidor
   socket.on('newPlayer', (p) => players[p.id] = p);
   socket.on('playerMoved', (p) => { if(players[p.id]) { players[p.id].x = p.x; players[p.id].y = p.y; players[p.id].r = p.r; } });
   socket.on('playerDisconnected', (id) => delete players[id]);
   socket.on('updateName', (data) => { if(players[data.id]) players[data.id].name = data.name; });
-  
-  socket.on('playerEaten', (data) => { 
-    if(players[data.eaterId]) players[data.eaterId].r = data.newRadius; 
-    delete players[data.targetId]; 
-  });
-
-  socket.on('foodEaten', (foodId) => {
-    const idx = foods.findIndex(f => f.id === foodId);
-    if(idx !== -1) foods.splice(idx, 1);
-  });
-  
-  socket.on('youWereEaten', () => {
-    alert("Você foi comido! Voltando ao menu.");
-    location.reload();
-  });
-
-  // Chat e Emotes
-  socket.on('chatMessage', (data) => {
-    addChatMsg(`${data.name}: ${data.msg}`);
-  });
+  socket.on('playerEaten', (data) => { if(players[data.eaterId]) players[data.eaterId].r = data.newRadius; delete players[data.targetId]; });
+  socket.on('foodEaten', (foodId) => { const idx = foods.findIndex(f => f.id === foodId); if(idx !== -1) foods.splice(idx, 1); });
+  socket.on('youWereEaten', () => { alert("Você foi comido! Voltando ao menu."); location.reload(); });
+  socket.on('chatMessage', (data) => { addChatMsg(`${data.name}: ${data.msg}`); });
 };
 
-// Loop de Atualização do Jogo
-function update() {
-  if(!myId || !players[myId]) return;
+function update(dt) {
+  if(!myId || !players[myId] || state !== 'lobby') return; // state lobby means playing here
   const me = players[myId];
-
-  // Movimento
   let mdx = 0, mdy = 0;
   if(joy.active) { mdx = joy.x; mdy = joy.y; }
-  if(mdx || mdy) { lastMoveDir = {x: mdx, y: mdy}; }
-  
   const speed = Math.max(100, 300 - me.r*2);
-  me.x += mdx * speed * 0.016; 
-  me.y += mdy * speed * 0.016;
-  me.x = Math.max(me.r, Math.min(worldSize-me.r, me.x));
-  me.y = Math.max(me.r, Math.min(worldSize-me.r, me.y));
+  me.x += mdx * speed * dt; me.y += mdy * speed * dt;
+  me.x = Math.max(me.r, Math.min(worldSize-me.r, me.x)); me.y = Math.max(me.r, Math.min(worldSize-me.r, me.y));
 
-  // Avisa o servidor da nova posição
   socket.emit('updateState', { x: me.x, y: me.y, r: me.r });
 
-  // Verifica se o player comeu outro jogador
   for(let id in players) {
     if(id === myId) continue;
     const other = players[id];
-    const dist = Math.hypot(me.x - other.x, me.y - other.y);
-    if(dist < me.r - other.r*0.5 && me.r > other.r * 1.1) {
-      socket.emit('eatPlayer', id); // Avisa o servidor para transferir a massa
-    }
+    if(Math.hypot(me.x - other.x, me.y - other.y) < me.r - other.r*0.5 && me.r > other.r * 1.1) socket.emit('eatPlayer', id);
   }
-
-  // Verifica se o player comeu comida
   for(let i = foods.length - 1; i >= 0; i--) {
     const f = foods[i];
-    const dist = Math.hypot(me.x - f.x, me.y - f.y);
-    if(dist < me.r - f.r*0.5) {
-      me.r = Math.sqrt(me.r*me.r + f.r*f.r*0.8);
-      socket.emit('eatFood', f.id); // Avisa o servidor
-    }
+    if(Math.hypot(me.x - f.x, me.y - f.y) < me.r - f.r*0.5) { me.r = Math.sqrt(me.r*me.r + f.r*f.r*0.8); socket.emit('eatFood', f.id); }
   }
 
-  // Câmera segue o player
-  targetX = me.x; targetY = me.y;
-  camera.x += (targetX - camera.x) * 0.1;
-  camera.y += (targetY - camera.y) * 0.1;
-  
-  let tZoom = Math.max(0.4, 1.2 - me.r*0.005);
-  camera.zoom += (tZoom - camera.zoom) * 0.05;
-  
+  camera.x += (me.x - camera.x) * 10 * dt; camera.y += (me.y - camera.y) * 10 * dt;
+  camera.zoom += (Math.max(0.4, 1.2 - me.r*0.005) - camera.zoom) * 5 * dt;
   document.getElementById('massVal').textContent = Math.round(me.r);
 }
 
-// Renderização
 function draw() {
   ctx.fillStyle = '#071624'; ctx.fillRect(0,0,W,H);
-  if(!myId || !players[myId]) return;
-
+  if(!myId || !players[myId] || state !== 'lobby') return;
   ctx.save();
   ctx.translate(W/2, H/2); ctx.scale(camera.zoom, camera.zoom); ctx.translate(-camera.x, -camera.y);
-
-  // Desenha Comida
   foods.forEach(f => { ctx.beginPath(); ctx.fillStyle = f.color; ctx.arc(f.x, f.y, f.r, 0, Math.PI*2); ctx.fill(); });
-
-  // Desenha Jogadores
   for(let id in players) {
     const p = players[id];
     ctx.beginPath(); ctx.fillStyle = p.color; ctx.arc(p.x, p.y, p.r, 0, Math.PI*2); ctx.fill();
     ctx.strokeStyle = id === myId ? '#fff' : '#0004'; ctx.lineWidth = 3; ctx.stroke();
+    if(id === myId && save.equippedSkin === 'custom' && customImage) {
+       ctx.save(); ctx.beginPath(); ctx.arc(p.x, p.y, p.r*0.8, 0, Math.PI*2); ctx.clip(); ctx.drawImage(customImage, p.x-p.r*0.8, p.y-p.r*0.8, p.r*1.6, p.r*1.6); ctx.restore();
+    }
     ctx.fillStyle = '#fff'; ctx.font = 'bold 14px sans-serif'; ctx.textAlign = 'center'; ctx.fillText(p.name, p.x, p.y - p.r - 10);
   }
-
   ctx.restore();
 }
 
-// Atualiza Placar Global em tempo real
 setInterval(() => {
-  if(!myId) return;
+  if(!myId || state !== 'lobby') return;
   const lb = document.getElementById('lbList');
   const arr = Object.values(players).sort((a,b) => b.r - a.r).slice(0, 10);
   lb.innerHTML = arr.map((p, i) => `<div style="color:${p.id===myId?'#4dff9e':'#fff'}; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${i+1}. ${p.name} - ${Math.round(p.r)}</div>`).join('');
 }, 1000);
 
-function loop() { update(); draw(); requestAnimationFrame(loop); }
-loop();
+function loop(t) {
+  const dt = Math.min(0.05, (t - lastTime)/1000 || 0); lastTime = t;
+  update(dt); draw(); requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
 
-// ==========================================
-// CONTROLES E UI
-// ==========================================
 document.getElementById('splitBtn').onclick = () => {
   if(players[myId] && players[myId].r > 30) {
-    players[myId].r /= 1.4; // Simulação local rápida
-    socket.emit('updateState', { x: players[myId].x, y: players[myId].y, r: players[myId].r });
+    players[myId].r /= 1.4; socket.emit('updateState', { x: players[myId].x, y: players[myId].y, r: players[myId].r });
   }
 };
+document.getElementById('adminMassBtn').onclick = () => { if(save.admin && players[myId]) { players[myId].r += 100; socket.emit('updateState', { x: players[myId].x, y: players[myId].y, r: players[myId].r }); } };
 
-// Analógico
+function resize() { const dpr = window.devicePixelRatio||1; W = window.innerWidth; H = window.innerHeight; canvas.width = W*dpr; canvas.height = H*dpr; canvas.style.width = W+'px'; canvas.style.height = H+'px'; ctx.scale(dpr,dpr); }
+window.addEventListener('resize', resize); resize();
+
 const joyEl = document.getElementById('joystick'), joyKnob = document.getElementById('joyKnob');
 joyEl.addEventListener('pointerdown', e => { joy.active = true; joyEl.setPointerCapture(e.pointerId); moveJoy(e.clientX, e.clientY); });
 joyEl.addEventListener('pointermove', e => { if(joy.active) moveJoy(e.clientX, e.clientY); });
 joyEl.addEventListener('pointerup', () => { joy.active = false; joy.x = 0; joy.y = 0; joyKnob.style.transform = 'translate(-50%,-50%)'; });
 function moveJoy(cx, cy) {
-  const rect = joyEl.getBoundingClientRect();
-  let dx = cx - (rect.left + rect.width/2), dy = cy - (rect.top + rect.height/2);
-  const max = rect.width/2, l = Math.hypot(dx,dy);
-  if(l > max) { dx = dx/l*max; dy = dy/l*max; }
-  joyKnob.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
-  joy.x = dx/max; joy.y = dy/max;
+  const rect = joyEl.getBoundingClientRect(); let dx = cx - (rect.left + rect.width/2), dy = cy - (rect.top + rect.height/2);
+  const max = rect.width/2, l = Math.hypot(dx,dy); if(l > max) { dx = dx/l*max; dy = dy/l*max; }
+  joyKnob.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`; joy.x = dx/max; joy.y = dy/max;
 }
 
-// Chat
 const chatBox = document.getElementById('chatBox');
 document.getElementById('chatBtn').onclick = () => { chatBox.style.display = chatBox.style.display === 'flex' ? 'none' : 'flex'; };
 document.getElementById('sendChat').onclick = () => {
   const msg = document.getElementById('chatInput').value.trim();
-  if(msg && socket) { 
-    socket.emit('chatMessage', msg); 
-    document.getElementById('chatInput').value = ''; 
-    chatBox.style.display = 'none'; 
-  }
+  if(msg && socket) { socket.emit('chatMessage', msg); document.getElementById('chatInput').value = ''; chatBox.style.display = 'none'; }
 };
-function addChatMsg(txt) {
-  const log = document.getElementById('chatLog');
-  const el = document.createElement('div'); 
-  el.textContent = txt; 
-  log.appendChild(el);
-  setTimeout(() => el.remove(), 5000);
-}
+function addChatMsg(txt) { const log = document.getElementById('chatLog'); const el = document.createElement('div'); el.textContent = txt; log.appendChild(el); setTimeout(() => el.remove(), 5000); }
+function showBanner(txt) { const b = document.createElement('div'); b.className = 'banner'; b.textContent = txt; bannerSlot.appendChild(b); setTimeout(()=>b.remove(), 2000); }
+
+showScreen('auth');
 </script>
 </body>
 </html>
