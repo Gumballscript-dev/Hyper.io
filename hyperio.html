@@ -249,7 +249,7 @@ const minimapCanvas = document.getElementById('minimap');
 const mmCtx = minimapCanvas.getContext('2d');
 
 let W, H, socket, myId = null, worldSize = 5000;
-let players = {}, foods = [], viruses = [], particles = [];
+let players = {}, foods = [], viruses = [], particles = [], ejectedMass = [];
 let camera = { x: 0, y: 0, zoom: 1 };
 let joy = { active: false, x: 0, y: 0 };
 let lastTime = 0, state = 'auth', currentAccount = null, customImage = null;
@@ -413,7 +413,7 @@ document.getElementById('btnPlayLobby').onclick = () => {
   
   foods = []; for(let i=0; i<1500; i++) foods.push({x: Math.random()*worldSize, y: Math.random()*worldSize, r: 4, color: `hsl(${Math.random()*360}, 100%, 70%)`});
   viruses = []; for(let i=0; i<25; i++) viruses.push({x: Math.random()*worldSize, y: Math.random()*worldSize, r: 25});
-  players = {}; particles = [];
+  players = {}; particles = []; ejectedMass = [];
 
   if(state === 'offline') {
     for(let i=0; i<30; i++) {
@@ -427,6 +427,36 @@ document.getElementById('btnPlayLobby').onclick = () => {
     socket.on('playerDisconnected', (id) => delete players[id]);
     socket.on('newPlayer', (p) => players[p.id] = p);
   }
+};
+
+// FUNÇÃO DO BOTÃO DE DIVIDIR (CORRIGIDA)
+document.getElementById('btnSplit').onclick = () => {
+  if(!isPlaying || splitCount >= 4 || !myCells[0] || myCells[0].r < 30) return;
+  
+  const newCells = [];
+  myCells.forEach(cell => {
+    const newR = cell.r / Math.SQRT2; // Divide o raio pela raiz de 2
+    cell.r = newR;
+    // Cria a nova célula com um impulso de velocidade (vx, vy)
+    newCells.push({ x: cell.x, y: cell.y, r: newR, vx: 20, vy: 20 });
+  });
+  
+  myCells = myCells.concat(newCells); 
+  splitCount++;
+  missions.split++; // Conta para a missão
+};
+
+// FUNÇÃO DO BOTÃO DE INJETAR (CORRIGIDA)
+document.getElementById('btnInject').onclick = () => {
+  if(!isPlaying || !myCells[0] || myCells[0].r < 30) return;
+  
+  myCells[0].r -= 3; // Perde 3 de raio
+  // Cria uma bolinha de massa sendo ejetada
+  ejectedMass.push({ 
+    x: myCells[0].x, y: myCells[0].y, 
+    vx: (Math.random() - 0.5) * 20, vy: (Math.random() - 0.5) * 20, 
+    r: 5, color: '#4dff9e' 
+  });
 };
 
 function update(dt) {
@@ -465,6 +495,17 @@ function update(dt) {
     }
   }
   myMass = totalMass;
+
+  // Atualiza as massas ejetadas
+  for (let i = ejectedMass.length - 1; i >= 0; i--) {
+    let e = ejectedMass[i];
+    e.x += e.vx * dt * 60; e.y += e.vy * dt * 60;
+    e.vx *= 0.95; e.vy *= 0.95;
+    if (e.vx < 0.1 && e.vy < 0.1) { // Virou comida
+      foods.push({ x: e.x, y: e.y, r: e.r, color: e.color });
+      ejectedMass.splice(i, 1);
+    }
+  }
 
   if(state === 'offline') {
     for(let id in players) {
@@ -588,6 +629,10 @@ function draw() {
     }
     ctx.fillStyle = '#fff'; ctx.font = 'bold 14px sans-serif'; ctx.textAlign = 'center'; ctx.fillText(currentAccount, c.x, c.y - c.r - 10);
   });
+  
+  // Desenha massas ejetadas
+  ejectedMass.forEach(e => { ctx.beginPath(); ctx.fillStyle = e.color; ctx.arc(e.x, e.y, e.r, 0, Math.PI*2); ctx.fill(); });
+  
   ctx.restore();
 }
 
@@ -604,32 +649,7 @@ function drawMinimap() {
 function loop(t) { const dt = Math.min(0.05, (t - lastTime)/1000 || 0); lastTime = t; update(dt); draw(); requestAnimationFrame(loop); }
 requestAnimationFrame(loop);
 
-document.getElementById('btnSplit').onclick = () => {
-  if(!isPlaying || splitCount >= 4 || myCells[0].r < 30) return;
-  const newCells = [];
-  myCells.forEach(cell => {
-    const newR = cell.r / Math.SQRT2; cell.r = newR;
-    newCells.push({ x: cell.x + 20, y: cell.y + 20, r: newR, vx: 15, vy: 15 });
-  });
-  myCells = myCells.concat(newCells); splitCount++;
-  missions.split++;
-};
-
-document.getElementById('btnInject').onclick = () => {
-  if(!isPlaying || myCells[0].r < 30) return;
-  myCells[0].r -= 3; 
-  for(let i=0; i<3; i++) {
-    particles.push({ x: myCells[0].x, y: myCells[0].y, vx: (Math.random()-0.5)*300, vy: (Math.random()-0.5)*300, color: '#4dff9e', life: 1 });
-  }
-};
-
-document.getElementById('btnPotion').onclick = () => {
-  if(myCells.length > 1) {
-    let totalR = Math.sqrt(myCells.reduce((acc, c) => acc + c.r*c.r, 0));
-    myCells = [{x: myCells[0].x, y: myCells[0].y, r: totalR}]; splitCount = 0;
-    document.getElementById('btnPotion').style.display = 'none';
-  }
-};
+document.getElementById('logoutBtn').onclick = () => { currentAccount = null; showScreen('authScreen'); };
 
 const joyEl = document.getElementById('joystick'), joyKnob = document.getElementById('joyKnob');
 joyEl.addEventListener('pointerdown', e => { joy.active = true; joyEl.setPointerCapture(e.pointerId); moveJoy(e.clientX, e.clientY); });
@@ -641,7 +661,13 @@ function moveJoy(cx, cy) {
   joyKnob.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`; joy.x = dx/max; joy.y = dy/max; 
 }
 
-document.getElementById('logoutBtn').onclick = () => { currentAccount = null; showScreen('authScreen'); };
+document.getElementById('btnPotion').onclick = () => {
+  if(myCells.length > 1) {
+    let totalR = Math.sqrt(myCells.reduce((acc, c) => acc + c.r*c.r, 0));
+    myCells = [{x: myCells[0].x, y: myCells[0].y, r: totalR}]; splitCount = 0;
+    document.getElementById('btnPotion').style.display = 'none';
+  }
+};
 
 function resize() { const dpr = window.devicePixelRatio||1; W = window.innerWidth; H = window.innerHeight; canvas.width = W*dpr; canvas.height = H*dpr; canvas.style.width = W+'px'; canvas.style.height = H+'px'; ctx.scale(dpr,dpr); }
 window.addEventListener('resize', resize); resize();
