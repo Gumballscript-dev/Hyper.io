@@ -247,7 +247,7 @@ document.getElementById('registerBtn').onclick = async () => {
 document.getElementById('upgradesBtn').onclick = () => showScreen('shopScreen');
 document.getElementById('battlepassBtn').onclick = () => showScreen('battlepassScreen');
 document.getElementById('settingsBtn').onclick = () => showScreen('settingsScreen');
-document.getElementById('logoutBtn').onclick = () => { currentAccount = null; showScreen('auth'); };
+document.getElementById('logoutBtn').onclick = () => { currentAccount = null; showScreen('authScreen'); };
 
 let modeIdx = 0;
 document.getElementById('prevMode').onclick = () => { modeIdx = (modeIdx - 1 + MODES.length) % MODES.length; document.getElementById('currentMode').textContent = MODES[modeIdx]; };
@@ -406,7 +406,7 @@ document.getElementById('potionBtn').onclick = () => { if(myCells.length > 1) { 
 
 function resize() { const dpr = window.devicePixelRatio||1; W = window.innerWidth; H = window.innerHeight; canvas.width = W*dpr; canvas.height = H*dpr; canvas.style.width = W+'px'; canvas.style.height = H+'px'; ctx.scale(dpr,dpr); }
 window.addEventListener('resize', resize); resize();
-showScreen('auth');
+showScreen('authScreen');
 </script>
 </body>
 </html>
